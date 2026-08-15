@@ -11,13 +11,12 @@ import java.awt.event.KeyEvent
 import javax.swing.ImageIcon
 import javax.swing.JButton
 import javax.swing.JFrame
-import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.JScrollPane
 import javax.swing.JTextField
 import javax.swing.SwingUtilities
 
-class GUI(val controller: Controller) : JFrame() {
+class GUI(val controller: Controller) : JFrame("Pixora") {
     val screenDim: Dimension = Toolkit.getDefaultToolkit().screenSize
 
     val contentPanel = JPanel()
@@ -95,12 +94,12 @@ class GUI(val controller: Controller) : JFrame() {
         }
     }
 
-    fun fillPic(icon: ImageIcon, id:String) {
+    fun CreatePictureButton(icon: ImageIcon, id:String) {
         SwingUtilities.invokeLater {
             val picBTN = JButton(icon)
             picBTN.preferredSize = Dimension(icon.image.getWidth(null), icon.image.getHeight(null))
             picBTN.addActionListener {
-                controller.loadPicture(id)
+                controller.handelSelectedPicture(id)
             }
             picturePanel.add(picBTN)
             revalidatePics()

@@ -35,12 +35,12 @@ class SearchRunnable(val query: String, val workQueue: LinkedBlockingQueue<Works
                     }
                     catch (e: Exception) {
                         println("$i. attempt: $e")
-                        println("try again in 3s")
-                        Thread.sleep(3000)
+                        println("try again in 5s")
+                        sleep(5000)
                     }
-                    if(Thread.currentThread().isInterrupted) break;
+                    if(currentThread().isInterrupted) break
                 }
-                if(Thread.currentThread().isInterrupted) break;
+                if(currentThread().isInterrupted) break
             }
             workQueue.put(Done)
         }
