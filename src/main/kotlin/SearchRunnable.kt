@@ -11,7 +11,16 @@ class SearchRunnable(val query: String, val workQueue: LinkedBlockingQueue<Works
         try {
 
             println("Starts to collect all pages")
-            numberOfPages = wallHaven.getNumberOfPagesOfQuery(query)
+            do {
+                numberOfPages = wallHaven.getNumberOfPagesOfQuery(query)
+                if(numberOfPages == -1) {
+                    println("To many requests: Waiting 5s")
+                    for(i in 0..10) {
+                        sleep(500)
+                    }
+                }
+            }while (numberOfPages == -1)
+
             for (page in 1..numberOfPages) {
                 for (i in 1..5) {
                     try {
@@ -19,6 +28,7 @@ class SearchRunnable(val query: String, val workQueue: LinkedBlockingQueue<Works
                         for (item in response) {
                             if(stopThread) {
                                 workQueue.clear()
+                                currentThread().interrupt()
                                 break
                             }
 
@@ -36,7 +46,14 @@ class SearchRunnable(val query: String, val workQueue: LinkedBlockingQueue<Works
                     catch (e: Exception) {
                         println("$i. attempt: $e")
                         println("try again in 5s")
-                        sleep(5000)
+                        for (i in 0..10) {
+                            if(stopThread) {
+                                workQueue.clear()
+                                currentThread().interrupt()
+                                break
+                            }
+                            sleep(500)
+                        }
                     }
                     if(currentThread().isInterrupted) break
                 }

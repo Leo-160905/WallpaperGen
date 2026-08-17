@@ -23,13 +23,13 @@ class WallHaven(val token: String) {
 
     fun getNumberOfPagesOfQuery(query: String): Int {
         val response = makeARequest("$searchURL?apikey=$token&q=$query")
-        println(response)
 
         if(!response.startsWith("<!DOCTYPE")) {
             val responseObject = JSONObject(response)
             return responseObject.getJSONObject("meta").getInt("last_page")
         }
-        throw Exception("To many Requests")
+
+        return -1
     }
 
     fun makeARequest(url: String): String {

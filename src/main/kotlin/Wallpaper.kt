@@ -9,9 +9,8 @@ sealed class Worksignal
 data class Wallpaper(val id: String, val imageURL: String, val thumbnailURL: String) : Worksignal(){
     lateinit var thumbnail: ImageIcon
     lateinit var image: BufferedImage
+    lateinit var imageBytes: ByteArray
     lateinit var size: Dimension
-    var isAlreadyPainted = false
-    var isInUse = false
 }
 
 object Done : Worksignal()

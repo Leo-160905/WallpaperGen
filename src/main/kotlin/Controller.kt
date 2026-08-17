@@ -1,11 +1,14 @@
 package de.leo160905
 
+import java.awt.Dimension
 import java.awt.image.BufferedImage
+import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.FileOutputStream
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.LinkedBlockingQueue
 import javax.imageio.ImageIO
+import javax.swing.UIManager
 
 class Controller {
     val wallHaven = WallHaven(configHashmap["apiKey"].toString())
@@ -14,7 +17,6 @@ class Controller {
     val backgroundSearchThreads: ArrayList<Thread> = ArrayList()
     lateinit var searchThread: SearchRunnable
     var gui = SearchGUI(this)
-    var thumbnailWidth = -1
 
     fun search(query: String) {
         println("Now Searching for: $query")
@@ -33,7 +35,9 @@ class Controller {
 
         println(backgroundSearchThreads.size)
         searchThread = SearchRunnable(query, thumbnailWorkQueue, wallHaven)
-
+        val scrollbarWidth = UIManager.getInt("ScrollBar.width").let { if (it > 0) it else 16 }
+        val thumbnailWidth = (gui.contentPanel.width - scrollbarWidth - 10) / 3
+        println(thumbnailWidth)
         for (i in 0..<4) {
             backgroundSearchThreads.add(
                 Thread(
@@ -49,7 +53,9 @@ class Controller {
             )
         }
         searchThread.start()
+        println("Now")
         backgroundSearchThreads.forEach { it.start() }
+        println("----------------------------------------------------------------------------------------------------------------")
     }
 
     fun handelSelectedPicture(id: String) {
@@ -57,10 +63,18 @@ class Controller {
         if (wallpaperItem != null) {
             println("loads Picture")
             val bytes = wallHaven.getImage(wallpaperItem.imageURL)
-            saveImage(bytes, id)
+            wallpaperItem.imageBytes = bytes
+            wallpaperItem.image = ImageIO.read(ByteArrayInputStream(bytes))
+            wallpaperItem.size = Dimension(wallpaperItem.image.width, wallpaperItem.image.height)
+            println(wallpaperItem.size.toString())
+            PreviewGUI(wallpaperItem, this)
 
-            saveThumbnail(wallpaperItem)
         }
+    }
+
+    fun saveWallpaper(wallpaper: Wallpaper) {
+            saveImage(wallpaper.imageBytes, wallpaper.id)
+            saveThumbnail(wallpaper)
     }
 
     fun saveImage(bytes: ByteArray, id: String) {
@@ -81,8 +95,6 @@ class Controller {
         val g2d = bi.createGraphics()
         g2d.drawImage(thumbnailImage, 0, 0, null)
         g2d.dispose()
-
-        println(configHashmap["thumbnailFolder"])
         ImageIO.write(bi, "PNG", File("${configHashmap["thumbnailFolder"]}/${wallpaperItem.id}.png"))
     }
 

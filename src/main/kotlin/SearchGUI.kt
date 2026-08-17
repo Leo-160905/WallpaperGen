@@ -36,7 +36,7 @@ class SearchGUI(val controller: Controller) : JFrame("Pixora") {
 
         contentPanel.preferredSize = Dimension(screenDim.width * 2 / 3, screenDim.height * 3 / 5)
         contentPanel.layout = BorderLayout()
-        contentPanel.add(getPictureScrollPane(contentPanel), BorderLayout.CENTER)
+        contentPanel.add(getPictureScrollPane(), BorderLayout.CENTER)
         cp.add(contentPanel, BorderLayout.CENTER)
 
         pack()
@@ -110,15 +110,13 @@ class SearchGUI(val controller: Controller) : JFrame("Pixora") {
         }
     }
 
-    fun getPictureScrollPane(parentPanel: JPanel): JScrollPane {
+    fun getPictureScrollPane(): JScrollPane {
         return JScrollPane(picturesGridPanel.apply {
             background = Color.ORANGE
             layout = GridLayout(0, 3, 5, 5)
-
-            val thirdWidth = parentPanel.preferredSize.width / 3
-            controller.thumbnailWidth = thirdWidth
         }).apply {
-            setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS)
+            verticalScrollBarPolicy = JScrollPane.VERTICAL_SCROLLBAR_ALWAYS
+            horizontalScrollBarPolicy = JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
             verticalScrollBar.unitIncrement = 15
         }
     }
@@ -136,8 +134,10 @@ class SearchGUI(val controller: Controller) : JFrame("Pixora") {
     }
 
     fun removePictures() {
-        picturesGridPanel.removeAll()
-        revalidatePics()
+        SwingUtilities.invokeLater  {
+            picturesGridPanel.removeAll()
+            revalidatePics()
+        }
     }
 
     fun revalidatePics() {
