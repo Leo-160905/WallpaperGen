@@ -13,7 +13,7 @@ class Controller {
     val finishedWallpaperHashmap = ConcurrentHashMap<String, Wallpaper>()
     val backgroundSearchThreads: ArrayList<Thread> = ArrayList()
     lateinit var searchThread: SearchRunnable
-    var gui = GUI(this)
+    var gui = SearchGUI(this)
     var thumbnailWidth = -1
 
     fun search(query: String) {
@@ -57,21 +57,36 @@ class Controller {
         if (wallpaperItem != null) {
             println("loads Picture")
             val bytes = wallHaven.getImage(wallpaperItem.imageURL)
-            val wallpaper = File("${configHashmap["downloadFolder"]}/$id.jpg")
-            val fos = FileOutputStream(wallpaper)
-            fos.write(bytes)
-            fos.close()
+            saveImage(bytes, id)
 
-            val thumbnailImage = wallpaperItem.thumbnail.image
-            val bi =
-                BufferedImage(thumbnailImage.getWidth(null), thumbnailImage.getHeight(null), BufferedImage.TYPE_INT_RGB)
-            val g2d = bi.createGraphics()
-            g2d.drawImage(thumbnailImage, 0, 0, null)
-            g2d.dispose()
-
-            println(configHashmap["thumbnailFolder"])
-            ImageIO.write(bi, "PNG", File("${configHashmap["thumbnailFolder"]}/${wallpaperItem.id}.png"))
-
+            saveThumbnail(wallpaperItem)
         }
+    }
+
+    fun saveImage(bytes: ByteArray, id: String) {
+        val wallpaper = File("${configHashmap["downloadFolder"]}/$id.jpg")
+        val fos = FileOutputStream(wallpaper)
+        fos.write(bytes)
+        fos.close()
+    }
+
+    fun saveThumbnail(wallpaperItem: Wallpaper) {
+        val thumbnailImage = wallpaperItem.thumbnail.image
+        val bi = BufferedImage(
+            thumbnailImage.getWidth(null),
+            thumbnailImage.getHeight(null),
+            BufferedImage.TYPE_INT_RGB
+        )
+
+        val g2d = bi.createGraphics()
+        g2d.drawImage(thumbnailImage, 0, 0, null)
+        g2d.dispose()
+
+        println(configHashmap["thumbnailFolder"])
+        ImageIO.write(bi, "PNG", File("${configHashmap["thumbnailFolder"]}/${wallpaperItem.id}.png"))
+    }
+
+    fun openPictureLibrary() {
+
     }
 }
