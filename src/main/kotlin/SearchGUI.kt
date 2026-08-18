@@ -135,6 +135,7 @@ class SearchGUI(val controller: Controller) : JFrame("Pixora") {
 
     fun removePictures() {
         SwingUtilities.invokeLater  {
+
             picturesGridPanel.removeAll()
             revalidatePics()
         }

@@ -30,7 +30,7 @@ class ThumbnailLoadingRunnable(
                         val scaledimage = icon.image.getScaledInstance(thumbnailWidth, heigh.roundToInt(), Image.SCALE_SMOOTH)
                         item.thumbnail = ImageIcon(scaledimage)
                         finishedWallpaperHasmap[item.id] = item
-                        controller.gui.CreatePictureButton(item.thumbnail, item.id)
+                        controller.setThumbnailOnGui(finishedWallpaperHasmap[item.id]!!)
                     }
                 }
             }

@@ -15,7 +15,7 @@ class Controller {
     val thumbnailWorkQueue = LinkedBlockingQueue<Worksignal>()
     val finishedWallpaperHashmap = ConcurrentHashMap<String, Wallpaper>()
     val backgroundSearchThreads: ArrayList<Thread> = ArrayList()
-    lateinit var searchThread: SearchRunnable
+    lateinit var searchThread: searchThread
     var gui = SearchGUI(this)
 
     fun search(query: String) {
@@ -30,11 +30,10 @@ class Controller {
 
         thumbnailWorkQueue.clear()
         finishedWallpaperHashmap.clear()
-
         gui.removePictures()
 
         println(backgroundSearchThreads.size)
-        searchThread = SearchRunnable(query, thumbnailWorkQueue, wallHaven)
+        searchThread = searchThread(query, thumbnailWorkQueue, wallHaven)
         val scrollbarWidth = UIManager.getInt("ScrollBar.width").let { if (it > 0) it else 16 }
         val thumbnailWidth = (gui.contentPanel.width - scrollbarWidth - 10) / 3
         println(thumbnailWidth)
@@ -96,6 +95,11 @@ class Controller {
         g2d.drawImage(thumbnailImage, 0, 0, null)
         g2d.dispose()
         ImageIO.write(bi, "PNG", File("${configHashmap["thumbnailFolder"]}/${wallpaperItem.id}.png"))
+    }
+
+    fun setThumbnailOnGui(item: Wallpaper) {
+        gui.CreatePictureButton(item.thumbnail, item.id)
+//        item.thumbnail
     }
 
     fun openPictureLibrary() {
