@@ -4,7 +4,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.util.concurrent.LinkedBlockingQueue
 
-class searchThread(val query: String, val workQueue: LinkedBlockingQueue<Worksignal>, val wallHaven: WallHaven) : Thread() {
+class searchThread(val query: String, val workQueue: LinkedBlockingQueue<Worksignal>, val wallHaven: WallHaven, var minMaxPage: Pair<Int, Int>) : Thread() {
     var numberOfPages = 0
     var stopThread = false
     override fun run() {
@@ -12,17 +12,21 @@ class searchThread(val query: String, val workQueue: LinkedBlockingQueue<Worksig
             println("Starts to collect all pages")
             do {
                 numberOfPages = wallHaven.getNumberOfPagesOfQuery(query)
+                println("numbers of pages: ${numberOfPages}")
                 if (numberOfPages == -1) {
                     println("To many requests: Waiting 5s")
-                    for (i in 0..10) {
+                    repeat(10) {
                         sleep(500)
                         if (stopThread) break
                     }
                 }
             } while (numberOfPages == -1)
 
+            minMaxPage = Pair(minMaxPage.first, if(numberOfPages > minMaxPage.second && minMaxPage.second != -1) minMaxPage.second else numberOfPages)
+            if(minMaxPage.first > minMaxPage.second) stopThread = true
+
             if (!stopThread) {
-                for (page in 1..numberOfPages) {
+                for (page in minMaxPage.first..minMaxPage.second) {
                     var response = JSONArray()
                     var isSuccessfull: Boolean
                     do {
@@ -31,7 +35,7 @@ class searchThread(val query: String, val workQueue: LinkedBlockingQueue<Worksig
                             isSuccessfull = true
                         } catch (_: Exception) {
                             isSuccessfull = false
-                            for (i in 0..10) {
+                            repeat(10) {
                                 sleep(500)
                                 if (stopThread) break
                             }

@@ -18,7 +18,13 @@ class Controller {
     lateinit var searchThread: searchThread
     var gui = SearchGUI(this)
 
-    fun search(query: String) {
+    fun search(query: String, pageFilter: String) {
+        val minMaxPage: Pair<Int, Int>
+        if(checkPageFilter(pageFilter)) {
+            minMaxPage = pageFilter.split("..").map{it.toInt()}.toPair()
+        }
+        else throw(Exception("Regex wasn't correct exception"))
+
         println("Now Searching for: $query")
         if (backgroundSearchThreads.isNotEmpty()) {
             searchThread.stopThread = true
@@ -33,14 +39,14 @@ class Controller {
         gui.removePictures()
 
         println(backgroundSearchThreads.size)
-        searchThread = searchThread(query, thumbnailWorkQueue, wallHaven)
+        searchThread = searchThread(query, thumbnailWorkQueue, wallHaven, minMaxPage)
         val scrollbarWidth = UIManager.getInt("ScrollBar.width").let { if (it > 0) it else 16 }
         val thumbnailWidth = (gui.contentPanel.width - scrollbarWidth - 10) / 3
         println(thumbnailWidth)
         for (i in 0..<4) {
             backgroundSearchThreads.add(
                 Thread(
-                    ThumbnailLoadingRunnable(
+                    ThumbnailLoadingThread(
                         "${i + 1}",
                         wallHaven,
                         finishedWallpaperHashmap,
@@ -104,5 +110,24 @@ class Controller {
 
     fun openPictureLibrary() {
 
+    }
+
+    fun <T> List<T>.toPair(): Pair<T,T> {
+        if(this.size >= 2) return Pair(this[0], this[1])
+        else throw(Exception("not right pattern exception (Regex didn't work)"))
+    }
+
+    fun checkPageFilter(filter: String): Boolean {
+        val regex = Regex("""\d+\.\.-?\d+""")
+        if(filter.matches(regex)) {
+            val pages: Pair<Int, Int> = filter.split("..").map { it.toInt() }.toPair()
+            println("${pages.first} : ${pages.second}")
+            return (pages.first < pages.second) xor (pages.second == -1)
+        }
+        return false
+    }
+
+    fun getMaxPageOfQuery(query: String): Int {
+        return wallHaven.getNumberOfPagesOfQuery(query)
     }
 }

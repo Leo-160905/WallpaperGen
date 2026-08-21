@@ -48,7 +48,7 @@ class PreviewGUI(wallpaper: Wallpaper, val controller: Controller) : JFrame() {
     }
 
     fun downloadButton(parentPanel: JPanel, wallpaper: Wallpaper): JButton{
-        return controller.gui.createBaseButton().apply {
+        return controller.gui.getButtonBase().apply {
             text = "download"
             background = Color.GREEN
             val width = if(parentPanel.preferredSize.width > 100) 100 else parentPanel.preferredSize.width
@@ -61,7 +61,7 @@ class PreviewGUI(wallpaper: Wallpaper, val controller: Controller) : JFrame() {
     }
 
     fun returnButton(parentPanel: JPanel): JButton{
-        return controller.gui.createBaseButton().apply {
+        return controller.gui.getButtonBase().apply {
             text = "return"
             background = Color.RED
             val width = if(parentPanel.preferredSize.width > 100) 100 else parentPanel.preferredSize.width
