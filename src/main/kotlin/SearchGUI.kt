@@ -3,6 +3,7 @@ package de.leo160905
 import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Dimension
+import java.awt.FlowLayout
 import java.awt.GridLayout
 import java.awt.Rectangle
 import java.awt.Toolkit
@@ -29,10 +30,11 @@ class SearchGUI(val controller: Controller) : JFrame("Pixora") {
 
     init {
         defaultCloseOperation = EXIT_ON_CLOSE
+        isResizable = false
 
         val cp = contentPane
         cp.layout = BorderLayout()
-        cp.add(getControllBar(), BorderLayout.NORTH)
+        cp.add(getControlBar(), BorderLayout.NORTH)
 
         contentPanel.preferredSize = Dimension(screenDim.width * 2 / 3, screenDim.height * 3 / 5)
         contentPanel.layout = BorderLayout()
@@ -46,47 +48,24 @@ class SearchGUI(val controller: Controller) : JFrame("Pixora") {
         isVisible = true
     }
 
-    fun getControllBar(): JPanel {
+    fun getControlBar(): JPanel {
         return JPanel().apply {
             preferredSize = Dimension(
                 screenDim.width * 2 / 3,
                 if (screenDim.height * 1 / 10 >= 100) screenDim.height * 1 / 10 else 100
             )
             background = Color.decode("000050")
-            layout = null
+            val myLayout = GridLayout(2, 1)
+            myLayout.columns
+            layout = myLayout
 
-            searchBtn = createSearchBTN(this)
-            add(searchBtn)
-            searchField = createSearchField(this)
-            add(searchField)
+            add(getSearchPanel(this))
 
-            switchTabButton = createSwitchTabButton(this)
-            add(switchTabButton)
+            add(getSettingsBar(this))
         }
     }
 
-    fun createSwitchTabButton(parentPanel: JPanel): JButton {
-        return createBaseButton().apply {
-            text = "open library"
-            bounds = Rectangle(650, (parentPanel.preferredSize.height - 30) / 2, 200, 30)
-            addActionListener {
-                controller.openPictureLibrary()
-            }
-        }
-    }
-
-
-    fun createSearchBTN(parentPanel: JPanel): JButton {
-        return createBaseButton().apply {
-            text = "Search"
-            bounds = Rectangle(400, (parentPanel.preferredSize.height - 30) / 2, 200, 30)
-            addActionListener {
-                controller.search(searchField.text)
-            }
-        }
-    }
-
-    fun createBaseButton() : JButton {
+    fun createBaseButton(): JButton {
         return JButton().apply {
             isFocusPainted = false
             isFocusable = false
@@ -96,9 +75,43 @@ class SearchGUI(val controller: Controller) : JFrame("Pixora") {
         }
     }
 
-    fun createSearchField(parentPanel: JPanel): JTextField {
+    fun getControlPanelBase(parentPanel: JPanel): JPanel {
+        return JPanel().apply {
+            val pHeight = parentPanel.preferredSize.height / 2
+            val pWidth = parentPanel.preferredSize.width
+            preferredSize = Dimension(pWidth, pHeight)
+            layout = FlowLayout(FlowLayout.LEFT, pWidth * 1 / 25, pHeight / 4)
+            background = parentPanel.background
+        }
+    }
+
+    fun getSearchPanel(parentPanel: JPanel): JPanel {
+        return getControlPanelBase(parentPanel).apply {
+            val pHeight = this.preferredSize.height
+            val pWidth = this.preferredSize.width
+
+            // TextFieldSize pWidth - 3x Padding 1/25 - Button 1/10 = 11/50
+            searchField = createSearchField(Dimension(pWidth - pWidth * 11 / 50, pHeight * 3 / 4))
+            add(searchField)
+            searchBtn = createSearchBTN(Dimension(pWidth * 1 / 10, pHeight * 3 / 4))
+            add(searchBtn)
+        }
+    }
+
+    fun createSearchBTN(tButtonSize: Dimension): JButton {
+        return createBaseButton().apply {
+            text = "Search"
+            preferredSize = tButtonSize
+            addActionListener {
+                controller.search(searchField.text)
+            }
+        }
+    }
+
+    fun createSearchField(tFieldSize: Dimension): JTextField {
         return JTextField().apply {
-            bounds = Rectangle(50, (parentPanel.preferredSize.height - 30) / 2, 300, 30)
+            preferredSize = tFieldSize
+//            bounds = Rectangle((pWidth - tFieldWidth) / 2, pHeight / 8, tFieldWidth, tFieldHeight)
             border = BorderFactory.createLineBorder(Color.BLACK, 3)
 
             addKeyListener(object : KeyAdapter() {
@@ -109,6 +122,27 @@ class SearchGUI(val controller: Controller) : JFrame("Pixora") {
             })
         }
     }
+
+    fun getSettingsBar(parentPanel: JPanel): JPanel {
+        return getControlPanelBase(parentPanel).apply {
+            val pHeight = this.preferredSize.height
+            val pWidth = this.preferredSize.width
+
+            switchTabButton = createSwitchTabButton(Dimension(pWidth * 1 / 15, pHeight * 2))
+            add(switchTabButton)
+        }
+    }
+
+    fun createSwitchTabButton(tButtonSize: Dimension): JButton {
+        return createBaseButton().apply {
+            text = "open library"
+            preferredSize = tButtonSize
+            addActionListener {
+                controller.openPictureLibrary()
+            }
+        }
+    }
+
 
     fun getPictureScrollPane(): JScrollPane {
         return JScrollPane(picturesGridPanel.apply {
@@ -134,7 +168,7 @@ class SearchGUI(val controller: Controller) : JFrame("Pixora") {
     }
 
     fun removePictures() {
-        SwingUtilities.invokeLater  {
+        SwingUtilities.invokeLater {
 
             picturesGridPanel.removeAll()
             revalidatePics()
