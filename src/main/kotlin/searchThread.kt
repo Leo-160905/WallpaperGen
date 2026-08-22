@@ -4,7 +4,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.util.concurrent.LinkedBlockingQueue
 
-class searchThread(val query: String, val workQueue: LinkedBlockingQueue<Worksignal>, val wallHaven: WallHaven, var minMaxPage: Pair<Int, Int>) : Thread() {
+class searchThread(val query: wallHavenQuery, val workQueue: LinkedBlockingQueue<Worksignal>, val wallHaven: WallHaven, var minMaxPage: Pair<Int, Int>) : Thread() {
     var numberOfPages = 0
     var stopThread = false
     override fun run() {

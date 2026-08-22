@@ -8,6 +8,7 @@ import java.io.FileOutputStream
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.LinkedBlockingQueue
 import javax.imageio.ImageIO
+import javax.swing.ImageIcon
 import javax.swing.UIManager
 
 class Controller {
@@ -18,14 +19,14 @@ class Controller {
     lateinit var searchThread: searchThread
     var gui = SearchGUI(this)
 
-    fun search(query: String, pageFilter: String) {
+    fun search(query: wallHavenQuery, pageFilter: String) {
         val minMaxPage: Pair<Int, Int>
         if(checkPageFilter(pageFilter)) {
             minMaxPage = pageFilter.split("..").map{it.toInt()}.toPair()
         }
         else throw(Exception("Regex wasn't correct exception"))
 
-        println("Now Searching for: $query")
+        println("Now Searching for: ${query.query}")
         if (backgroundSearchThreads.isNotEmpty()) {
             searchThread.stopThread = true
             backgroundSearchThreads.forEach { it.interrupt() }
@@ -64,6 +65,7 @@ class Controller {
     }
 
     fun handelSelectedPicture(id: String) {
+        gui.setCursorToLoading()
         val wallpaperItem = finishedWallpaperHashmap[id]
         if (wallpaperItem != null) {
             println("loads Picture")
@@ -90,7 +92,7 @@ class Controller {
     }
 
     fun saveThumbnail(wallpaperItem: Wallpaper) {
-        val thumbnailImage = wallpaperItem.thumbnail.image
+        val thumbnailImage = wallHaven.loadScaledThumbnail(wallpaperItem, wallpaperItem.thumbnailDimension.width).image
         val bi = BufferedImage(
             thumbnailImage.getWidth(null),
             thumbnailImage.getHeight(null),
@@ -103,9 +105,8 @@ class Controller {
         ImageIO.write(bi, "PNG", File("${configHashmap["thumbnailFolder"]}/${wallpaperItem.id}.png"))
     }
 
-    fun setThumbnailOnGui(item: Wallpaper) {
-        gui.CreatePictureButton(item.thumbnail, item.id)
-//        item.thumbnail
+    fun setThumbnailOnGui(item: Wallpaper, thumbnail: ImageIcon) {
+        gui.CreatePictureButton(thumbnail, item.id)
     }
 
     fun openPictureLibrary() {
@@ -122,12 +123,12 @@ class Controller {
         if(filter.matches(regex)) {
             val pages: Pair<Int, Int> = filter.split("..").map { it.toInt() }.toPair()
             println("${pages.first} : ${pages.second}")
-            return (pages.first < pages.second) xor (pages.second == -1)
+            return ((pages.first <= pages.second) xor (pages.second == -1)) && pages.first > 0
         }
         return false
     }
 
-    fun getMaxPageOfQuery(query: String): Int {
+    fun getMaxPageOfQuery(query: wallHavenQuery): Int {
         return wallHaven.getNumberOfPagesOfQuery(query)
     }
 }

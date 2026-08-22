@@ -34,6 +34,8 @@ class PreviewGUI(wallpaper: Wallpaper, val controller: Controller) : JFrame() {
         setLocationRelativeTo(null)
         Toolkit.getDefaultToolkit().sync()
         isVisible = true
+
+        controller.gui.setCursorToPointer()
     }
 
     fun initControllerPanel(wallpaper: Wallpaper) {

@@ -2,6 +2,7 @@ package de.leo160905
 
 import java.awt.BorderLayout
 import java.awt.Color
+import java.awt.Cursor
 import java.awt.Dimension
 import java.awt.FlowLayout
 import java.awt.Font
@@ -14,6 +15,7 @@ import java.util.Locale
 import javax.swing.BorderFactory
 import javax.swing.ImageIcon
 import javax.swing.JButton
+import javax.swing.JComboBox
 import javax.swing.JFrame
 import javax.swing.JPanel
 import javax.swing.JScrollPane
@@ -32,6 +34,8 @@ class SearchGUI(val controller: Controller) : JFrame("Pixora") {
 
     lateinit var switchTabButton: JButton
     lateinit var pageFilterField: JTextField
+    lateinit var sortingDropDownMenu: JComboBox<wallHavenQuery.SortType>
+    var purityString = "100"
 
     init {
         defaultCloseOperation = EXIT_ON_CLOSE
@@ -119,7 +123,7 @@ class SearchGUI(val controller: Controller) : JFrame("Pixora") {
             text = "Search"
             preferredSize = tButtonSize
             addActionListener {
-                controller.search(searchField.text, pageFilterField.text)
+                controller.search(wallHavenQuery(searchField.text, purityString, sortingDropDownMenu.getItemAt(sortingDropDownMenu.selectedIndex)), pageFilterField.text)
             }
         }
     }
@@ -151,6 +155,11 @@ class SearchGUI(val controller: Controller) : JFrame("Pixora") {
             add(pageFilterField)
 
             add(createCheckMaxPagesButton(Dimension(pWidth * 1 / 15, componentsHeight), font))
+
+            add(createPuritySettingsPanel(Dimension(pWidth * 2 / 15, componentsHeight), font))
+
+            sortingDropDownMenu = createSortingDropDownMenu(Dimension(pWidth * 2 / 15, componentsHeight), font)
+            add(sortingDropDownMenu)
         }
     }
 
@@ -167,9 +176,9 @@ class SearchGUI(val controller: Controller) : JFrame("Pixora") {
 
     fun createPageFilterField(size: Dimension, font: Font): JTextField {
         return getTextFieldBase().apply {
-            toolTipText = "0..Infinity | -1 is max"
+            toolTipText = "1..Infinity | -1 is max"
             preferredSize = size
-            text = "0..-1"
+            text = "1..-1"
             this.font = font
 
             document.addDocumentListener(object : DocumentListener {
@@ -200,13 +209,64 @@ class SearchGUI(val controller: Controller) : JFrame("Pixora") {
             this.font = font
 
             addActionListener {
-                val maxPages = controller.getMaxPageOfQuery(searchField.text)
+                val maxPages = controller.getMaxPageOfQuery(wallHavenQuery(searchField.text,purityString))
                 val formater = NumberFormat.getNumberInstance(Locale.GERMANY)
                 text = formater.format(maxPages)
             }
         }
     }
 
+    fun createPuritySettingsPanel(size: Dimension, font: Font): JPanel {
+        return JPanel().apply {
+
+            preferredSize = size
+            layout = GridLayout(1,3)
+            isOpaque = false
+            add(getButtonBase().apply {
+                text = "SFW"
+                this.font = font
+                background = Color.GREEN
+                preferredSize = Dimension(size.width/ 4, size.height)
+                addActionListener {
+                    background = if (background == Color.WHITE) Color.GREEN else Color.WHITE
+                    purityString = if(background == Color.WHITE) "0${purityString[1]}${purityString[2]}" else "1${purityString[1]}${purityString[2]}"
+                    println(purityString)
+                }
+            })
+            add(getButtonBase().apply {
+                text = "Sketchy"
+                this.font = font
+                preferredSize = Dimension(size.width/ 2, size.height)
+                addActionListener {
+                    background = if (background == Color.WHITE) Color.GREEN else Color.WHITE
+                    purityString = if(background == Color.WHITE) "${purityString[0]}0${purityString[2]}" else "${purityString[0]}1${purityString[2]}"
+                    println(purityString)
+                }
+            })
+            add(getButtonBase().apply {
+                text = "NSFW"
+                this.font = font
+                preferredSize = Dimension(size.width/ 4, size.height)
+                addActionListener {
+                    background = if (background == Color.WHITE) Color.GREEN else Color.WHITE
+                    purityString = if(background == Color.WHITE) "${purityString[0]}${purityString[1]}0" else "${purityString[0]}${purityString[1]}1"
+                    println(purityString)
+                }
+            })
+        }
+    }
+
+    fun createSortingDropDownMenu(size: Dimension, font: Font): JComboBox<wallHavenQuery.SortType>  {
+        return JComboBox<wallHavenQuery.SortType>().apply {
+            preferredSize = size
+            this.font = font
+            addItem(wallHavenQuery.SortType.TOPLIST)
+            addItem(wallHavenQuery.SortType.RELEVANCE)
+            addItem(wallHavenQuery.SortType.VIEWS)
+            addItem(wallHavenQuery.SortType.RANDOM)
+            addItem(wallHavenQuery.SortType.FAVOURITES)
+        }
+    }
 
     fun getPictureScrollPane(): JScrollPane {
         return JScrollPane(picturesGridPanel.apply {
@@ -242,5 +302,13 @@ class SearchGUI(val controller: Controller) : JFrame("Pixora") {
     fun revalidatePics() {
         picturesGridPanel.revalidate()
         picturesGridPanel.repaint()
+    }
+
+    fun setCursorToLoading() {
+        cursor = Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR)
+    }
+
+    fun setCursorToPointer() {
+        cursor = Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR)
     }
 }
