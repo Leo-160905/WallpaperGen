@@ -7,6 +7,7 @@ import java.awt.image.BufferedImage
 sealed class Worksignal
 data class Wallpaper(val id: String, val imageURL: String, val thumbnailURL: String) : Worksignal(){
     lateinit var thumbnailDimension: Dimension
+    lateinit var thumbnail: BufferedImage
     lateinit var image: BufferedImage
     lateinit var imageBytes: ByteArray
     lateinit var size: Dimension

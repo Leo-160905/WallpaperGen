@@ -24,7 +24,7 @@ import javax.swing.SwingUtilities
 import javax.swing.event.DocumentEvent
 import javax.swing.event.DocumentListener
 
-class SearchGUI(val controller: Controller) : JFrame("Pixora") {
+class SearchGUI(val controller: Controller, isVisibleAtStart: Boolean) : JFrame("Pixora") {
     val screenDim: Dimension = Toolkit.getDefaultToolkit().screenSize
 
     val contentPanel = JPanel()
@@ -55,7 +55,7 @@ class SearchGUI(val controller: Controller) : JFrame("Pixora") {
         revalidate()
         setLocationRelativeTo(null)
         Toolkit.getDefaultToolkit().sync()
-        isVisible = true
+        isVisible = isVisibleAtStart
     }
 
 
@@ -160,6 +160,24 @@ class SearchGUI(val controller: Controller) : JFrame("Pixora") {
 
             sortingDropDownMenu = createSortingDropDownMenu(Dimension(pWidth * 2 / 15, componentsHeight), font)
             add(sortingDropDownMenu)
+
+
+
+
+
+            add(createResetButton(Dimension(pWidth * 1 / 15, componentsHeight), font))
+        }
+    }
+
+    fun createResetButton(size: Dimension, font: Font): JButton {
+        return getButtonBase().apply {
+            text = "reset"
+            background = Color.RED
+            preferredSize = size
+            this.font = font
+            addActionListener {
+                controller.reset()
+            }
         }
     }
 
@@ -187,7 +205,7 @@ class SearchGUI(val controller: Controller) : JFrame("Pixora") {
                 override fun changedUpdate(e: DocumentEvent?) = onChange()
                 fun onChange() {
                     val result = controller.checkPageFilter(text)
-                    println("Check for: $text got reuslt: $result")
+                    println("Check for: $text got result: ${if(result) "Valid" else "Invalid"}")
                     searchBtn.isEnabled = result
                 }
             })

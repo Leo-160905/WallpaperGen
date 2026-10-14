@@ -35,7 +35,7 @@ class PreviewGUI(wallpaper: Wallpaper, val controller: Controller) : JFrame() {
         Toolkit.getDefaultToolkit().sync()
         isVisible = true
 
-        controller.gui.setCursorToPointer()
+        controller.searchGUI.setCursorToPointer()
     }
 
     fun initControllerPanel(wallpaper: Wallpaper) {
@@ -50,10 +50,10 @@ class PreviewGUI(wallpaper: Wallpaper, val controller: Controller) : JFrame() {
     }
 
     fun downloadButton(parentPanel: JPanel, wallpaper: Wallpaper): JButton{
-        return controller.gui.getButtonBase().apply {
+        return controller.searchGUI.getButtonBase().apply {
             text = "download"
             background = Color.GREEN
-            val width = if(parentPanel.preferredSize.width > 100) 100 else parentPanel.preferredSize.width
+            val width = if(parentPanel.preferredSize.width > 150) 150 else parentPanel.preferredSize.width
             bounds = Rectangle(parentPanel.preferredSize.width / 2 - width - 20, frameHeight * 1 / 25, width, frameHeight * 2 / 50)
             addActionListener {
                 controller.saveWallpaper(wallpaper)
@@ -63,10 +63,10 @@ class PreviewGUI(wallpaper: Wallpaper, val controller: Controller) : JFrame() {
     }
 
     fun returnButton(parentPanel: JPanel): JButton{
-        return controller.gui.getButtonBase().apply {
+        return controller.searchGUI.getButtonBase().apply {
             text = "return"
             background = Color.RED
-            val width = if(parentPanel.preferredSize.width > 100) 100 else parentPanel.preferredSize.width
+            val width = if(parentPanel.preferredSize.width > 150) 150 else parentPanel.preferredSize.width
             bounds = Rectangle(parentPanel.preferredSize.width / 2 + 20, frameHeight * 1 / 25, width, frameHeight * 2 / 50)
             addActionListener { this@PreviewGUI.dispose() }
         }

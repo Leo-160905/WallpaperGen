@@ -17,7 +17,26 @@ class Controller {
     val finishedWallpaperHashmap = ConcurrentHashMap<String, Wallpaper>()
     val backgroundSearchThreads: ArrayList<Thread> = ArrayList()
     lateinit var searchThread: searchThread
-    var gui = SearchGUI(this)
+    var searchGUI: SearchGUI
+    var libraryGUI: LibraryGUI
+
+
+    lateinit var savedWallpapers: ArrayList<Wallpaper>
+
+    init {
+        if(configHashmap["startupMode"] == StartupMode.LIBRARY.name) {
+            println("Library")
+            searchGUI = SearchGUI(this, false)
+            libraryGUI = LibraryGUI(this, true)
+            distributeSavedPicturesToLibraryPanel()
+        }
+        else {
+            println("search")
+            searchGUI = SearchGUI(this, true)
+            libraryGUI = LibraryGUI(this, false)
+            distributeSavedPicturesToLibraryPanel()
+        }
+    }
 
     fun search(query: wallHavenQuery, pageFilter: String) {
         val minMaxPage: Pair<Int, Int>
@@ -27,22 +46,13 @@ class Controller {
         else throw(Exception("Regex wasn't correct exception"))
 
         println("Now Searching for: ${query.query}")
-        if (backgroundSearchThreads.isNotEmpty()) {
-            searchThread.stopThread = true
-            backgroundSearchThreads.forEach { it.interrupt() }
-            backgroundSearchThreads.forEach { it.join() }
-            searchThread.join()
-            backgroundSearchThreads.clear()
-        }
 
-        thumbnailWorkQueue.clear()
-        finishedWallpaperHashmap.clear()
-        gui.removePictures()
+        reset()
 
         println(backgroundSearchThreads.size)
         searchThread = searchThread(query, thumbnailWorkQueue, wallHaven, minMaxPage)
         val scrollbarWidth = UIManager.getInt("ScrollBar.width").let { if (it > 0) it else 16 }
-        val thumbnailWidth = (gui.contentPanel.width - scrollbarWidth - 10) / 3
+        val thumbnailWidth = (searchGUI.contentPanel.width - scrollbarWidth - 10) / 3
         println(thumbnailWidth)
         for (i in 0..<4) {
             backgroundSearchThreads.add(
@@ -64,8 +74,24 @@ class Controller {
         println("----------------------------------------------------------------------------------------------------------------")
     }
 
+    fun reset() {
+        if (backgroundSearchThreads.isNotEmpty()) {
+            searchThread.stopThread = true
+            backgroundSearchThreads.forEach { it.interrupt() }
+            backgroundSearchThreads.forEach { it.join() }
+            searchThread.join()
+            backgroundSearchThreads.clear()
+        }
+
+        println("Exsisting Threads: ${backgroundSearchThreads.size}")
+
+        thumbnailWorkQueue.clear()
+        finishedWallpaperHashmap.clear()
+        searchGUI.removePictures()
+    }
+
     fun handelSelectedPicture(id: String) {
-        gui.setCursorToLoading()
+        searchGUI.setCursorToLoading()
         val wallpaperItem = finishedWallpaperHashmap[id]
         if (wallpaperItem != null) {
             println("loads Picture")
@@ -106,23 +132,22 @@ class Controller {
     }
 
     fun setThumbnailOnGui(item: Wallpaper, thumbnail: ImageIcon) {
-        gui.CreatePictureButton(thumbnail, item.id)
+        searchGUI.CreatePictureButton(thumbnail, item.id)
     }
 
     fun openPictureLibrary() {
-
     }
 
     fun <T> List<T>.toPair(): Pair<T,T> {
         if(this.size >= 2) return Pair(this[0], this[1])
-        else throw(Exception("not right pattern exception (Regex didn't work)"))
+        else throw(Exception("not enough elements for creating pair"))
     }
 
     fun checkPageFilter(filter: String): Boolean {
         val regex = Regex("""\d+\.\.-?\d+""")
         if(filter.matches(regex)) {
             val pages: Pair<Int, Int> = filter.split("..").map { it.toInt() }.toPair()
-            println("${pages.first} : ${pages.second}")
+//            println("${pages.first} : ${pages.second}")
             return ((pages.first <= pages.second) xor (pages.second == -1)) && pages.first > 0
         }
         return false
@@ -130,5 +155,57 @@ class Controller {
 
     fun getMaxPageOfQuery(query: wallHavenQuery): Int {
         return wallHaven.getNumberOfPagesOfQuery(query)
+    }
+
+    fun loadAllSavedPictures() {
+        val downloads = File(configHashmap["downloadFolder"].toString()).listFiles()
+        val thumbnails = File(configHashmap["thumbnailFolder"].toString()).listFiles()
+        val thumbnailHashMap: HashMap<String, File> = HashMap()
+        if(thumbnails == null || downloads == null) return
+        if(thumbnails.size != downloads.size) return
+        if(thumbnails.isEmpty() || downloads.isEmpty()) return
+
+        thumbnails.forEach {
+            val id = it.name.split(".")[0]
+            thumbnailHashMap[id] = it
+        }
+        thumbnailHashMap.forEach { string -> println(string) }
+
+        val wallpapers: ArrayList<Wallpaper> = ArrayList()
+        for (file in downloads) {
+            println("now loading ${file.name}")
+
+            val id = file.name.split(".")[0]
+            val wallpaper = Wallpaper(id, "", "")
+            wallpaper.image = ImageIO.read(file)
+            if(thumbnailHashMap[id] == null) throw(Exception("hashmap is null $id"))
+            wallpaper.thumbnail = ImageIO.read(thumbnailHashMap[id])
+            wallpaper.thumbnailDimension = Dimension(wallpaper.thumbnail.width, wallpaper.thumbnail.height)
+
+            wallpapers.add(wallpaper)
+        }
+        savedWallpapers = wallpapers
+    }
+
+    fun distributeSavedPicturesToLibraryPanel() {
+        val thread = Thread({
+            run {
+                println("Started Thread")
+                libraryGUI.setCursorToLoading()
+                loadAllSavedPictures()
+                val scrollbarWidth = UIManager.getInt("ScrollBar.width").let { if (it > 0) it else 16 }
+                val thumbnailWidth = (libraryGUI.contentPanel.width - scrollbarWidth - 10) / 3
+                println("Loads first picture")
+                savedWallpapers.forEach {
+
+                    val icon = wallHaven.scaleImageIcon(ImageIcon(it.thumbnail), thumbnailWidth, it)
+                    libraryGUI.CreatePictureButton(icon, it.id)
+                }
+
+                libraryGUI.setCursorToPointer()
+            }
+        })
+
+        thread.start()
     }
 }

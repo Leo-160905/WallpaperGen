@@ -42,6 +42,8 @@ fun main() {
         input = readln()
         configHashmap["thumbnailFolder"] = if (input != "") input else "$pixoraBaseDir/thumbnails"
 
+        configHashmap["startupMode"] = StartupMode.LIBRARY.name
+
         val fos = FileOutputStream(file)
         configHashmap.forEach { (key, value) -> fos.write("$key=$value\n".toByteArray()) }
         fos.close()

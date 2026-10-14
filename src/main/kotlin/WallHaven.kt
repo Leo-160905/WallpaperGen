@@ -58,6 +58,10 @@ class WallHaven(val token: String) {
 
     fun loadScaledThumbnail(item: Wallpaper, thumbnailWidth: Int): ImageIcon {
         val icon = ImageIcon(getImage(item.thumbnailURL))
+        return scaleImageIcon(icon, thumbnailWidth, item)
+    }
+
+    fun scaleImageIcon(icon: ImageIcon, thumbnailWidth: Int, item: Wallpaper): ImageIcon {
         val heigh = icon.image.getHeight(null) / (icon.image.getWidth(null) / thumbnailWidth.toFloat())
         val scaledImage = BufferedImage(thumbnailWidth, heigh.roundToInt(), BufferedImage.TYPE_INT_RGB)
         item.thumbnailDimension = Dimension(thumbnailWidth, heigh.roundToInt())
