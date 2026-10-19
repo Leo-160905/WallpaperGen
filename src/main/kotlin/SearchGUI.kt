@@ -278,6 +278,7 @@ class SearchGUI(val controller: Controller, isVisibleAtStart: Boolean) : JFrame(
         return JComboBox<wallHavenQuery.SortType>().apply {
             preferredSize = size
             this.font = font
+            addItem(wallHavenQuery.SortType.DATE_ADDED)
             addItem(wallHavenQuery.SortType.TOPLIST)
             addItem(wallHavenQuery.SortType.RELEVANCE)
             addItem(wallHavenQuery.SortType.VIEWS)
@@ -297,7 +298,7 @@ class SearchGUI(val controller: Controller, isVisibleAtStart: Boolean) : JFrame(
         }
     }
 
-    fun CreatePictureButton(icon: ImageIcon, id: String) {
+    fun createPictureButton(icon: ImageIcon, id: String) {
         SwingUtilities.invokeLater {
             val picBTN = JButton(icon)
             picBTN.preferredSize = Dimension(icon.image.getWidth(null), icon.image.getHeight(null))

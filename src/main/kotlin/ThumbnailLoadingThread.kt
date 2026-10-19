@@ -16,19 +16,23 @@ class ThumbnailLoadingThread(
         try {
             while (true) {
                 if (currentThread().isInterrupted) break
-                when (val item = workQueue.take()) {
+                val item = workQueue.take()
+//                println("Thread $threadId is doing $item")
+                when (item) {
                     is Done -> {
                         workQueue.put(Done); break
                     }
 
                     is Wallpaper -> {
                         val thumbnail = wallHaven.loadScaledThumbnail(item, thumbnailWidth)
+//                        println("Thread $threadId is now handling ${item.id}")
                         finishedWallpaperHasmap[item.id] = item
                         controller.setThumbnailOnGui(finishedWallpaperHasmap[item.id]!!, thumbnail)
                     }
                 }
             }
         } catch (_: Exception) {
+            println("Thread $threadId didn't start correctly")
         }
         println("Closing Thread $threadId")
     }

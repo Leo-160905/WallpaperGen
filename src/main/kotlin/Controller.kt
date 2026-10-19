@@ -28,14 +28,15 @@ class Controller {
             println("Library")
             searchGUI = SearchGUI(this, false)
             libraryGUI = LibraryGUI(this, true)
-            distributeSavedPicturesToLibraryPanel()
+//            distributeSavedPicturesToLibraryPanel()
         }
         else {
             println("search")
             searchGUI = SearchGUI(this, true)
             libraryGUI = LibraryGUI(this, false)
-            distributeSavedPicturesToLibraryPanel()
+//            distributeSavedPicturesToLibraryPanel()
         }
+
     }
 
     fun search(query: wallHavenQuery, pageFilter: String) {
@@ -53,7 +54,6 @@ class Controller {
         searchThread = searchThread(query, thumbnailWorkQueue, wallHaven, minMaxPage)
         val scrollbarWidth = UIManager.getInt("ScrollBar.width").let { if (it > 0) it else 16 }
         val thumbnailWidth = (searchGUI.contentPanel.width - scrollbarWidth - 10) / 3
-        println(thumbnailWidth)
         for (i in 0..<4) {
             backgroundSearchThreads.add(
                 Thread(
@@ -69,7 +69,6 @@ class Controller {
             )
         }
         searchThread.start()
-        println("Now")
         backgroundSearchThreads.forEach { it.start() }
         println("----------------------------------------------------------------------------------------------------------------")
     }
@@ -132,7 +131,7 @@ class Controller {
     }
 
     fun setThumbnailOnGui(item: Wallpaper, thumbnail: ImageIcon) {
-        searchGUI.CreatePictureButton(thumbnail, item.id)
+        searchGUI.createPictureButton(thumbnail, item.id)
     }
 
     fun openPictureLibrary() {
@@ -157,13 +156,13 @@ class Controller {
         return wallHaven.getNumberOfPagesOfQuery(query)
     }
 
-    fun loadAllSavedPictures() {
+    fun loadAllSavedPictures(): ArrayList<Wallpaper> {
         val downloads = File(configHashmap["downloadFolder"].toString()).listFiles()
         val thumbnails = File(configHashmap["thumbnailFolder"].toString()).listFiles()
         val thumbnailHashMap: HashMap<String, File> = HashMap()
-        if(thumbnails == null || downloads == null) return
-        if(thumbnails.size != downloads.size) return
-        if(thumbnails.isEmpty() || downloads.isEmpty()) return
+        if(thumbnails == null || downloads == null) throw Exception("Thumbnails or downloads are null")
+        if(thumbnails.size != downloads.size) throw Exception("Thumbnail size is not equal to downloads size")
+        if(thumbnails.isEmpty() || downloads.isEmpty()) throw Exception("Thumbnails or downloads are empty")
 
         thumbnails.forEach {
             val id = it.name.split(".")[0]
@@ -184,7 +183,7 @@ class Controller {
 
             wallpapers.add(wallpaper)
         }
-        savedWallpapers = wallpapers
+        return wallpapers
     }
 
     fun distributeSavedPicturesToLibraryPanel() {
@@ -192,7 +191,7 @@ class Controller {
             run {
                 println("Started Thread")
                 libraryGUI.setCursorToLoading()
-                loadAllSavedPictures()
+                savedWallpapers = loadAllSavedPictures()
                 val scrollbarWidth = UIManager.getInt("ScrollBar.width").let { if (it > 0) it else 16 }
                 val thumbnailWidth = (libraryGUI.contentPanel.width - scrollbarWidth - 10) / 3
                 println("Loads first picture")

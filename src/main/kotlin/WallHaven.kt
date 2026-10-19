@@ -16,7 +16,7 @@ class WallHaven(val token: String) {
     fun search(wallHavenQuery: wallHavenQuery, page: Int): JSONArray {
         val response =
             makeARequest("$searchURL?apikey=$token&q=${wallHavenQuery.query}&page=$page&purity=${wallHavenQuery.purity}&sorting=${wallHavenQuery.sorting.label}")
-        println(response)
+        println("got response: $response")
         if (!response.startsWith("<!DOCTYPE")) {
             val responseObject = JSONObject(response)
             val responseArray = responseObject.getJSONArray("data")
@@ -37,6 +37,7 @@ class WallHaven(val token: String) {
     }
 
     fun makeARequest(url: String): String {
+        println("Searching for: $url")
         val client = OkHttpClient()
         val request = Request.Builder().url(url).build()
 
@@ -58,7 +59,11 @@ class WallHaven(val token: String) {
 
     fun loadScaledThumbnail(item: Wallpaper, thumbnailWidth: Int): ImageIcon {
         val icon = ImageIcon(getImage(item.thumbnailURL))
-        return scaleImageIcon(icon, thumbnailWidth, item)
+        val heigh = icon.image.getHeight(null) / (icon.image.getWidth(null) / thumbnailWidth.toFloat())
+        val scaledImage = BufferedImage(thumbnailWidth, heigh.roundToInt(), BufferedImage.TYPE_INT_RGB)
+        item.thumbnailDimension = Dimension(thumbnailWidth, heigh.roundToInt())
+        scaledImage.graphics.drawImage(icon.image, 0, 0, null)
+        return ImageIcon(scaledImage)
     }
 
     fun scaleImageIcon(icon: ImageIcon, thumbnailWidth: Int, item: Wallpaper): ImageIcon {
@@ -70,8 +75,9 @@ class WallHaven(val token: String) {
     }
 }
 
-data class wallHavenQuery(val query: String, val purity: String = "100", val sorting: SortType = SortType.TOPLIST) {
+data class wallHavenQuery(val query: String, val purity: String = "100", val sorting: SortType = SortType.DATE_ADDED) {
     enum class SortType(val label: String) {
+        DATE_ADDED("date_added"),
         RELEVANCE("relevance"),
         RANDOM("random"),
         VIEWS("views"),
