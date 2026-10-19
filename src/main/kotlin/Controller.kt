@@ -187,8 +187,7 @@ class Controller {
     }
 
     fun distributeSavedPicturesToLibraryPanel() {
-        val thread = Thread({
-            run {
+        val thread = Thread {
                 println("Started Thread")
                 libraryGUI.setCursorToLoading()
                 savedWallpapers = loadAllSavedPictures()
@@ -202,8 +201,7 @@ class Controller {
                 }
 
                 libraryGUI.setCursorToPointer()
-            }
-        })
+        }
 
         thread.start()
     }
