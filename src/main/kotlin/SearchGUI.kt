@@ -161,10 +161,6 @@ class SearchGUI(val controller: Controller, isVisibleAtStart: Boolean) : JFrame(
             sortingDropDownMenu = createSortingDropDownMenu(Dimension(pWidth * 2 / 15, componentsHeight), font)
             add(sortingDropDownMenu)
 
-
-
-
-
             add(createResetButton(Dimension(pWidth * 1 / 15, componentsHeight), font))
         }
     }
@@ -194,9 +190,9 @@ class SearchGUI(val controller: Controller, isVisibleAtStart: Boolean) : JFrame(
 
     fun createPageFilterField(size: Dimension, font: Font): JTextField {
         return getTextFieldBase().apply {
-            toolTipText = "1..Infinity | -1 is max"
+            toolTipText = "f.e. 1..5 | -1 is max"
             preferredSize = size
-            text = "1..-1"
+            text = "1..10"
             this.font = font
 
             document.addDocumentListener(object : DocumentListener {
@@ -279,7 +275,8 @@ class SearchGUI(val controller: Controller, isVisibleAtStart: Boolean) : JFrame(
             preferredSize = size
             this.font = font
             addItem(wallHavenQuery.SortType.DATE_ADDED)
-            addItem(wallHavenQuery.SortType.TOPLIST)
+            // Turned off because of api bug -> get no response (worked in past)
+//            addItem(wallHavenQuery.SortType.TOPLIST)
             addItem(wallHavenQuery.SortType.RELEVANCE)
             addItem(wallHavenQuery.SortType.VIEWS)
             addItem(wallHavenQuery.SortType.RANDOM)

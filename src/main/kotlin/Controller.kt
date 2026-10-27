@@ -9,6 +9,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.LinkedBlockingQueue
 import javax.imageio.ImageIO
 import javax.swing.ImageIcon
+import javax.swing.SwingUtilities
 import javax.swing.UIManager
 
 class Controller {
@@ -19,32 +20,31 @@ class Controller {
     lateinit var searchThread: searchThread
     var searchGUI: SearchGUI
     var libraryGUI: LibraryGUI
+    var thumbnailWidth = 0
 
 
-    lateinit var savedWallpapers: ArrayList<Wallpaper>
+    var savedWallpapers: ArrayList<Wallpaper> = ArrayList()
 
     init {
-        if(configHashmap["startupMode"] == StartupMode.LIBRARY.name) {
+        if (configHashmap["startupMode"] == StartupMode.LIBRARY.name) {
             println("Library")
             searchGUI = SearchGUI(this, false)
             libraryGUI = LibraryGUI(this, true)
-//            distributeSavedPicturesToLibraryPanel()
-        }
-        else {
+            distributeSavedPicturesToLibraryPanel()
+        } else {
             println("search")
             searchGUI = SearchGUI(this, true)
             libraryGUI = LibraryGUI(this, false)
-//            distributeSavedPicturesToLibraryPanel()
+            distributeSavedPicturesToLibraryPanel()
         }
 
     }
 
     fun search(query: wallHavenQuery, pageFilter: String) {
         val minMaxPage: Pair<Int, Int>
-        if(checkPageFilter(pageFilter)) {
-            minMaxPage = pageFilter.split("..").map{it.toInt()}.toPair()
-        }
-        else throw(Exception("Regex wasn't correct exception"))
+        if (checkPageFilter(pageFilter)) {
+            minMaxPage = pageFilter.split("..").map { it.toInt() }.toPair()
+        } else throw (Exception("Regex wasn't correct exception"))
 
         println("Now Searching for: ${query.query}")
 
@@ -100,13 +100,13 @@ class Controller {
             wallpaperItem.size = Dimension(wallpaperItem.image.width, wallpaperItem.image.height)
             println(wallpaperItem.size.toString())
             PreviewGUI(wallpaperItem, this)
-
         }
     }
 
     fun saveWallpaper(wallpaper: Wallpaper) {
-            saveImage(wallpaper.imageBytes, wallpaper.id)
-            saveThumbnail(wallpaper)
+        saveImage(wallpaper.imageBytes, wallpaper.id)
+        wallpaper.thumbnail = saveThumbnail(wallpaper)
+        addSavedWallpaperToLibrary(wallpaper)
     }
 
     fun saveImage(bytes: ByteArray, id: String) {
@@ -116,8 +116,8 @@ class Controller {
         fos.close()
     }
 
-    fun saveThumbnail(wallpaperItem: Wallpaper) {
-        val thumbnailImage = wallHaven.loadScaledThumbnail(wallpaperItem, wallpaperItem.thumbnailDimension.width).image
+    fun saveThumbnail(wallpaperItem: Wallpaper): BufferedImage {
+        val thumbnailImage = wallHaven.loadScaledThumbnail(wallpaperItem, thumbnailWidth).image
         val bi = BufferedImage(
             thumbnailImage.getWidth(null),
             thumbnailImage.getHeight(null),
@@ -128,6 +128,7 @@ class Controller {
         g2d.drawImage(thumbnailImage, 0, 0, null)
         g2d.dispose()
         ImageIO.write(bi, "PNG", File("${configHashmap["thumbnailFolder"]}/${wallpaperItem.id}.png"))
+        return bi
     }
 
     fun setThumbnailOnGui(item: Wallpaper, thumbnail: ImageIcon) {
@@ -135,16 +136,23 @@ class Controller {
     }
 
     fun openPictureLibrary() {
+        searchGUI.isVisible = false
+        libraryGUI.isVisible = true
     }
 
-    fun <T> List<T>.toPair(): Pair<T,T> {
-        if(this.size >= 2) return Pair(this[0], this[1])
-        else throw(Exception("not enough elements for creating pair"))
+    fun openSeachFrame() {
+        searchGUI.isVisible = true
+        libraryGUI.isVisible = false
+    }
+
+    fun <T> List<T>.toPair(): Pair<T, T> {
+        if (this.size >= 2) return Pair(this[0], this[1])
+        else throw (Exception("not enough elements for creating pair"))
     }
 
     fun checkPageFilter(filter: String): Boolean {
         val regex = Regex("""\d+\.\.-?\d+""")
-        if(filter.matches(regex)) {
+        if (filter.matches(regex)) {
             val pages: Pair<Int, Int> = filter.split("..").map { it.toInt() }.toPair()
 //            println("${pages.first} : ${pages.second}")
             return ((pages.first <= pages.second) xor (pages.second == -1)) && pages.first > 0
@@ -156,51 +164,100 @@ class Controller {
         return wallHaven.getNumberOfPagesOfQuery(query)
     }
 
-    fun loadAllSavedPictures(): ArrayList<Wallpaper> {
-        val downloads = File(configHashmap["downloadFolder"].toString()).listFiles()
-        val thumbnails = File(configHashmap["thumbnailFolder"].toString()).listFiles()
+    fun loadAllSavedPictures() {
+        var downloadsFolder = File(configHashmap["downloadFolder"].toString()).listFiles()
+        var thumbnailsFolder = File(configHashmap["thumbnailFolder"].toString()).listFiles()
         val thumbnailHashMap: HashMap<String, File> = HashMap()
-        if(thumbnails == null || downloads == null) throw Exception("Thumbnails or downloads are null")
-        if(thumbnails.size != downloads.size) throw Exception("Thumbnail size is not equal to downloads size")
-        if(thumbnails.isEmpty() || downloads.isEmpty()) throw Exception("Thumbnails or downloads are empty")
 
-        thumbnails.forEach {
+        if (thumbnailsFolder == null) throw Exception("Thumbnails folder is null")
+        if (downloadsFolder == null) throw Exception("Downloads folder is null")
+
+        if (thumbnailsFolder.size != downloadsFolder.size) {
+            hanleMissingImagaesOrThumbnails(downloadsFolder, thumbnailsFolder)
+            downloadsFolder = File(configHashmap["downloadFolder"].toString()).listFiles()
+            thumbnailsFolder = File(configHashmap["thumbnailFolder"].toString()).listFiles()
+
+            // if files are still missing the program just gives up xD
+            if (thumbnailsFolder == null) throw Exception("Thumbnails folder is null")
+            if (downloadsFolder == null) throw Exception("Downloads folder is null")
+            if(downloadsFolder.size != thumbnailsFolder.size) throw Exception("Couldn't load missing Files")
+        }
+
+        if (thumbnailsFolder.isEmpty()) throw Exception("Thumbnails folder is empty")
+        if (downloadsFolder.isEmpty()) throw Exception("Thumbnails folder is empty")
+
+        thumbnailsFolder.forEach {
             val id = it.name.split(".")[0]
             thumbnailHashMap[id] = it
         }
-        thumbnailHashMap.forEach { string -> println(string) }
 
-        val wallpapers: ArrayList<Wallpaper> = ArrayList()
-        for (file in downloads) {
+        for (file in downloadsFolder) {
             println("now loading ${file.name}")
 
             val id = file.name.split(".")[0]
             val wallpaper = Wallpaper(id, "", "")
             wallpaper.image = ImageIO.read(file)
-            if(thumbnailHashMap[id] == null) throw(Exception("hashmap is null $id"))
+            if (thumbnailHashMap[id] == null) throw (Exception("hashmap is null $id"))
             wallpaper.thumbnail = ImageIO.read(thumbnailHashMap[id])
             wallpaper.thumbnailDimension = Dimension(wallpaper.thumbnail.width, wallpaper.thumbnail.height)
-
-            wallpapers.add(wallpaper)
+            addSavedWallpaperToLibrary(wallpaper)
         }
-        return wallpapers
+    }
+
+    fun hanleMissingImagaesOrThumbnails(downloadsFolder: Array<File>, thumbnailsFolder:  Array<File>) {
+        val imageIDs: MutableList<String> = mutableListOf()
+        downloadsFolder.forEach {
+            imageIDs.add(it.name.split(".")[0])
+        }
+
+
+
+        thumbnailsFolder.forEach { thumb ->
+            var checked = false
+            for (imageId in imageIDs) {
+                if(thumb.name.startsWith(imageId)) {
+                    imageIDs.remove(imageId)
+                    checked = true
+                    break
+                }
+            }
+            if(!checked) {
+                val imageID =  thumb.name.split(".")[0]
+                val imageUrl = wallHaven.getWallpaperInformation(imageID).getString("path")
+                val imageBytes = wallHaven.getImage(imageUrl)
+
+                saveImage(imageBytes, imageID)
+            }
+        }
+
+        for (imageID in imageIDs) {
+            val imageInfo = wallHaven.getWallpaperInformation(imageID)
+            val thumbnailUrl = imageInfo.getJSONObject("data").getJSONObject("thumbs").getString("large")
+            val wallpaper = Wallpaper(imageID, "", thumbnailUrl)
+            saveThumbnail(wallpaper)
+        }
+
+    }
+
+    fun addSavedWallpaperToLibrary(wallpaper: Wallpaper) {
+
+        val resizedThumbnail = wallHaven.scaleImageIcon(ImageIcon(wallpaper.thumbnail), thumbnailWidth, wallpaper)
+        libraryGUI.createPictureButton(resizedThumbnail, wallpaper.id)
+
+        savedWallpapers.add(wallpaper)
     }
 
     fun distributeSavedPicturesToLibraryPanel() {
         val thread = Thread {
-                println("Started Thread")
-                libraryGUI.setCursorToLoading()
-                savedWallpapers = loadAllSavedPictures()
-                val scrollbarWidth = UIManager.getInt("ScrollBar.width").let { if (it > 0) it else 16 }
-                val thumbnailWidth = (libraryGUI.contentPanel.width - scrollbarWidth - 10) / 3
-                println("Loads first picture")
-                savedWallpapers.forEach {
+            println("Started Thread")
+            SwingUtilities.invokeLater { libraryGUI.setCursorToLoading() }
 
-                    val icon = wallHaven.scaleImageIcon(ImageIcon(it.thumbnail), thumbnailWidth, it)
-                    libraryGUI.CreatePictureButton(icon, it.id)
-                }
+            val scrollbarWidth = UIManager.getInt("ScrollBar.width").let { if (it > 0) it else 16 }
+            thumbnailWidth = (libraryGUI.contentPanel.width - scrollbarWidth - 10) / 3
 
-                libraryGUI.setCursorToPointer()
+            loadAllSavedPictures()
+
+            SwingUtilities.invokeLater { libraryGUI.setCursorToPointer()}
         }
 
         thread.start()

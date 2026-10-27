@@ -25,6 +25,16 @@ class WallHaven(val token: String) {
         throw Exception("To many Requests")
     }
 
+    fun getWallpaperInformation(id: String): JSONObject {
+        val response = makeARequest("$baseURL/w/$id?apikey=$token")
+        println("got response: $response")
+        if (!response.startsWith("<!DOCTYPE")) {
+            val responseObject = JSONObject(response)
+            return responseObject
+        }
+        throw Exception("To many Requests")
+    }
+
     fun getNumberOfPagesOfQuery(query: wallHavenQuery): Int {
         val response = makeARequest("$searchURL?apikey=$token&q=${query.query}&purity=${query.purity}")
 

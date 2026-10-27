@@ -4,9 +4,11 @@ import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Cursor
 import java.awt.Dimension
+import java.awt.FlowLayout
 import java.awt.Font
 import java.awt.GridLayout
 import java.awt.Toolkit
+import javax.swing.BorderFactory
 import javax.swing.ImageIcon
 import javax.swing.JButton
 import javax.swing.JFrame
@@ -14,7 +16,7 @@ import javax.swing.JPanel
 import javax.swing.JScrollPane
 import javax.swing.SwingUtilities
 
-class LibraryGUI(controller: Controller, isVisibleAtStart: Boolean) : JFrame() {
+class LibraryGUI(val controller: Controller, isVisibleAtStart: Boolean) : JFrame() {
 
     var contentPanel: JPanel
     val screenDim: Dimension = Toolkit.getDefaultToolkit().screenSize
@@ -23,7 +25,7 @@ class LibraryGUI(controller: Controller, isVisibleAtStart: Boolean) : JFrame() {
     init {
         defaultCloseOperation = EXIT_ON_CLOSE
         isResizable = false
-        font = Font("Arial",Font.BOLD, 20)
+        font = Font("Arial", Font.BOLD, 20)
 
         val cp = contentPane
         cp.layout = BorderLayout()
@@ -39,13 +41,45 @@ class LibraryGUI(controller: Controller, isVisibleAtStart: Boolean) : JFrame() {
         isVisible = isVisibleAtStart
     }
 
-    fun createContentPanel(): JPanel {
-        return JPanel().apply {
-            preferredSize = Dimension(screenDim.width * 2 / 3, screenDim.height * 3 / 5)
-            layout = BorderLayout()
+    fun createContentPanel() = JPanel().apply {
+        preferredSize = Dimension(screenDim.width * 2 / 3, screenDim.height * 3 / 5)
+        layout = BorderLayout()
 
-            add(getPictureScrollPane(), BorderLayout.CENTER)
+        add(createSettingsPanel(), BorderLayout.NORTH)
+        add(getPictureScrollPane(), BorderLayout.CENTER)
+    }
+
+    fun createSettingsPanel(): JPanel {
+        return JPanel().apply {
+            preferredSize = Dimension(
+                screenDim.width * 2 / 3,
+                if (screenDim.height * 1 / 20 >= 50) screenDim.height * 1 / 20 else 50
+            )
+
+            val pHeight = this.preferredSize.height / 2
+            val pWidth = this.preferredSize.width
+
+            font = Font("Arial", Font.BOLD, 12)
+
+            background = Color.decode("000050")
+
+            layout = FlowLayout(FlowLayout.LEFT, pWidth * 1 / 50, pHeight / 2)
+
+            add(getSearchTabButton(Dimension(pWidth * 1/15, pHeight), this))
+
         }
+    }
+
+    fun getSearchTabButton(size: Dimension, parentPanel: JPanel) = JButton("open Search").apply {
+        preferredSize = size
+        isFocusPainted = false
+        isFocusable = false
+
+        border = BorderFactory.createLineBorder(Color.BLACK, 3)
+
+        font = parentPanel.font
+
+        addActionListener { controller.openSeachFrame() }
     }
 
     fun getPictureScrollPane(): JScrollPane {
@@ -59,7 +93,7 @@ class LibraryGUI(controller: Controller, isVisibleAtStart: Boolean) : JFrame() {
         }
     }
 
-    fun CreatePictureButton(icon: ImageIcon, id: String) {
+    fun createPictureButton(icon: ImageIcon, id: String) {
         SwingUtilities.invokeLater {
             val picBTN = JButton(icon)
             picBTN.preferredSize = Dimension(icon.image.getWidth(null), icon.image.getHeight(null))
