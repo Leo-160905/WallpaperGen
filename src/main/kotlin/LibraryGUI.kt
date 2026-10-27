@@ -11,12 +11,14 @@ import java.awt.Toolkit
 import javax.swing.BorderFactory
 import javax.swing.ImageIcon
 import javax.swing.JButton
+import javax.swing.JFileChooser
 import javax.swing.JFrame
 import javax.swing.JPanel
 import javax.swing.JScrollPane
 import javax.swing.SwingUtilities
+import javax.swing.UIManager
 
-class LibraryGUI(val controller: Controller, isVisibleAtStart: Boolean) : JFrame() {
+class LibraryGUI(val controller: Controller, isVisibleAtStart: Boolean) : BaseFrame("Library") {
 
     var contentPanel: JPanel
     val screenDim: Dimension = Toolkit.getDefaultToolkit().screenSize
@@ -66,19 +68,28 @@ class LibraryGUI(val controller: Controller, isVisibleAtStart: Boolean) : JFrame
             layout = FlowLayout(FlowLayout.LEFT, pWidth * 1 / 50, pHeight / 2)
 
             add(getSearchTabButton(Dimension(pWidth * 1/15, pHeight), this))
-
+            add(getFileChooseButton(Dimension(pWidth * 1/15, pHeight), this))
         }
     }
 
-    fun getSearchTabButton(size: Dimension, parentPanel: JPanel) = JButton("open Search").apply {
+    fun getFileChooseButton(size: Dimension, parentPanel: JPanel) = getButtonBase("choose File").apply {
         preferredSize = size
-        isFocusPainted = false
-        isFocusable = false
-
-        border = BorderFactory.createLineBorder(Color.BLACK, 3)
-
         font = parentPanel.font
+        addActionListener {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName())
+            val fc = JFileChooser()
+            fc.fileSelectionMode = JFileChooser.FILES_AND_DIRECTORIES
+            fc.preferredSize = Dimension(screenDim.width * 2/4, screenDim.height * 2/5)
+            if(fc.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+                val selectedFile = fc.selectedFile
+                println("Selected File: $selectedFile")
+            }
+        }
+    }
 
+    fun getSearchTabButton(size: Dimension, parentPanel: JPanel) = getButtonBase("open Search").apply {
+        preferredSize = size
+        font = parentPanel.font
         addActionListener { controller.openSeachFrame() }
     }
 

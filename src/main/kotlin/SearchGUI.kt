@@ -4,7 +4,6 @@ import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Cursor
 import java.awt.Dimension
-import java.awt.FlowLayout
 import java.awt.Font
 import java.awt.GridLayout
 import java.awt.Toolkit
@@ -12,11 +11,9 @@ import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 import java.text.NumberFormat
 import java.util.Locale
-import javax.swing.BorderFactory
 import javax.swing.ImageIcon
 import javax.swing.JButton
 import javax.swing.JComboBox
-import javax.swing.JFrame
 import javax.swing.JPanel
 import javax.swing.JScrollPane
 import javax.swing.JTextField
@@ -24,7 +21,7 @@ import javax.swing.SwingUtilities
 import javax.swing.event.DocumentEvent
 import javax.swing.event.DocumentListener
 
-class SearchGUI(val controller: Controller, isVisibleAtStart: Boolean) : JFrame("Pixora") {
+class SearchGUI(val controller: Controller, isVisibleAtStart: Boolean) : BaseFrame("Pixora") {
     val screenDim: Dimension = Toolkit.getDefaultToolkit().screenSize
 
     val contentPanel = JPanel()
@@ -59,34 +56,7 @@ class SearchGUI(val controller: Controller, isVisibleAtStart: Boolean) : JFrame(
     }
 
 
-    fun getButtonBase(): JButton {
-        return JButton().apply {
-            isFocusPainted = false
-            isFocusable = false
-            font = this@SearchGUI.font
 
-            background = Color.WHITE
-            border = BorderFactory.createLineBorder(Color.BLACK, 3)
-        }
-    }
-
-    fun getTextFieldBase(): JTextField {
-        return JTextField().apply {
-            border = BorderFactory.createLineBorder(Color.BLACK, 3)
-            font = this@SearchGUI.font
-        }
-    }
-
-    fun getControlPanelBase(parentPanel: JPanel): JPanel {
-        return JPanel().apply {
-            val pHeight = parentPanel.preferredSize.height / 2
-            val pWidth = parentPanel.preferredSize.width
-            preferredSize = Dimension(pWidth, pHeight)
-            layout = FlowLayout(FlowLayout.LEFT, pWidth * 1 / 50, pHeight / 4)
-            background = parentPanel.background
-            font = this@SearchGUI.font
-        }
-    }
 
     fun getControlBar(): JPanel {
         return JPanel().apply {
